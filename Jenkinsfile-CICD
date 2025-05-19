@@ -1,0 +1,50 @@
+pipeline {
+    agent any
+
+    environment {
+        GIT_URL = 'https://github.com/chaerish/stock-be'
+        GIT_BRANCH = 'main'
+        GIT_ID = 'skala-github-id'
+        IMAGE_REGISTRY = 'amdp-registry.skala-ai.com/skala25a'
+        IMAGE_NAME = 'sk036-stock-be'
+        IMAGE_TAG = '1.0.0'
+        DOCKER_CREDENTIAL_ID = 'skala-image-registry-id'
+    }
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git branch: "${GIT_BRANCH}",
+                    url: "${GIT_URL}",
+                    credentialsId: "${GIT_ID}"
+            }
+        }
+
+    stage('Build with Gradle') {
+        steps {
+            sh './gradlew clean build -x test'
+        }
+    }
+
+        stage('Docker Build & Push') {
+            steps {
+                script {
+                    docker.withRegistry("https://${IMAGE_REGISTRY}", "${DOCKER_CREDENTIAL_ID}") {
+                        def appImage = docker.build("${IMAGE_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}", "--platform=linux/amd64 .")
+                        appImage.push()
+                    }
+                }
+            }
+    
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh '''
+                    kubectl apply -f ./k8s
+                    kubectl rollout status deployment/sk036-stock-be
+                '''
+            }
+        }
+    }
+}
