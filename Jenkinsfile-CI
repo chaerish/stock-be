@@ -9,7 +9,7 @@ pipeline {
         GIT_USER_EMAIL = 'ccyy8432@naver.com'
         IMAGE_REGISTRY = 'amdp-registry.skala-ai.com/skala25a'
         IMAGE_NAME = 'sk036-stock-be'
-        IMAGE_TAG = '1.0.0'
+        IMAGE_TAG = '2.0.0'
         DOCKER_CREDENTIAL_ID = 'skala-image-registry-id'
     }
 
@@ -62,13 +62,13 @@ pipeline {
                     def gitRepoPath = env.GIT_URL.replaceFirst(/^https?:\/\//, '')
 
                     sh """
-                        sed -i 's|^[[:space:]]*image:.*\$|${newImageLine}|g' ./k8s/deploy.yaml
+                        sed -i 's|^[[:space:]]*image:.*\$|${newImageLine}|g' ./argocd-k8s/deploy.yaml
                         cat ./k8s/deploy.yaml
                     """
 
                     sh """
                         git config user.name "$GIT_USER_NAME"
-                        git config user.email "$GIT_USER_EMAIL"
+                        git config user.email "$GIT_USER_EMAIL"  
                         git add ./k8s/deploy.yaml || true
                     """
 
